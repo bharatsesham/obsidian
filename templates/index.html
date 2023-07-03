@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Text Generation with GPT-2</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+
+<h1>Text Generation with GPT-2</h1>
+
+<form id="generate-form">
+  <label for="input-text">Input Text:</label><br>
+  <input type="text" id="input-text" name="input-text"><br>
+  <input type="submit" value="Generate">
+</form>
+
+<p id="output-text"></p>
+
+<script>
+$(document).ready(function() {
+  $("#generate-form").submit(function(event) {
+    event.preventDefault();
+
+    var inputText = $("#input-text").val();
+
+    $.ajax({
+      url: 'https://3054-73-97-128-250.ngrok-free.app/generate',
+      type: 'post',
+      contentType: 'application/json',
+      data: JSON.stringify({ 'input': inputText }),
+      success: function(data) {
+        $("#output-text").text(data.generated_text);
+      }
+    });
+  });
+});
+</script>
+
+</body>
+</html>
