@@ -11,7 +11,7 @@ model = AutoModelForCausalLM.from_pretrained("gpt2")
 # model = AutoModelForCausalLM.from_pretrained("gpt2-xl")
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 @app.route('/')
 def home():
