@@ -118,5 +118,7 @@ You can set environment variables in Docker using the `-e` flag in the `run` com
 docker run -d -p 5000:5000 -e VAR=value my-app
 ```
 
+Make sure to create an account at https://ngrok.com/ and use the Authtoken from the account. Also, replace the URL in the index.html with the ngrok URL when created.  
+
 Conclusion:
 Mastering Docker commands can significantly speed up your development workflow and reduce the "it works on my machine" problem. This guide should serve as a good starting point for developers new to Docker, but remember, practice is key when it comes to learning and mastering any new tool. Happy Dockering!
