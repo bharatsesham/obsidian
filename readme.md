@@ -73,7 +73,7 @@ Run Ngrok commands after running `docker exec`:
 8. **Start ngrok inside the Docker container**:
 
 ```bash
-./ngrok http 5001
+./ngrok http --hostname=ml-engine.ngrok.app 5001
 ```
 
 Remember, the authentication step needs to be performed every time a new Docker container is run from the image. This is because the Docker container does not persist the state between restarts, so the authenticated ngrok state is lost when the Docker container is stopped.
