@@ -22,14 +22,17 @@ $(document).ready(function() {
     event.preventDefault();
 
     var inputText = $("#input-text").val();
+    console.log("Input text received: ", inputText);
 
     $.ajax({
-      url: 'https://6a8c-73-97-128-250.ngrok-free.app/generate',
+      url: 'https://ml-engine.ngrok.app//generate',
       type: 'post',
       contentType: 'application/json',
       data: JSON.stringify({ 'input': inputText }),
       success: function(data) {
+        console.log("Response received: ", data);
         $("#output-text").text(data.generated_text);
+        console.log("Output text set: ", data.generated_text);
       }
     });
   });
