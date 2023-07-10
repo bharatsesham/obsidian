@@ -1,8 +1,9 @@
-from flask import Flask, request, render_template, make_response
-from transformers import AutoTokenizer, AutoModelForCausalLM
-from flask_cors import CORS
-import logging
 import time
+import logging
+from diffusers import DiffusionPipeline
+from flask_cors import CORS
+from transformers import AutoTokenizer, AutoModelForCausalLM, AutoProcessor, SpeechT5ForTextToSpeech
+from flask import Flask, request, render_template, make_response
 
 # Setup logging
 logging.basicConfig(filename='app.log', level=logging.DEBUG,
@@ -19,6 +20,14 @@ logging.info('Loading model')
 model = AutoModelForCausalLM.from_pretrained(
     "minhtoan/gpt3-small-finetune-cnndaily-news")
 
+
+# # Load the SpeechT5ForTextToSpeech processor and model
+# processor_speecht5 = AutoProcessor.from_pretrained("microsoft/speecht5_tts")
+# model_speecht5 = SpeechT5ForTextToSpeech.from_pretrained("microsoft/speecht5_tts")
+
+# Load the DiffusionPipeline
+# pipeline = DiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5")
+# pipeline.to("cuda")
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})  # This should allow all origins
@@ -59,6 +68,26 @@ def generate():
     logging.debug(f'Response: {response}')
     return response
 
+
+# @app.route('/generate_speech', methods=['POST'])
+# def generate_speecht5():
+#     data = request.json
+#     input_text = data['input']
+#     input_processor = processor_speecht5(input_text, return_tensors="pt", padding=True, truncation=True)
+#     output = model_speecht5(**input_processor)
+#     return {'generated_speech': output} # You might need to adjust this depending on how you want to use the output
+
+
+# @app.route('/generate_image', methods=['POST'])
+# def generate_image():
+#     try:
+#         data = request.json
+#         image = pipeline(data['input']).images[0]
+#         image_path = "/images/generated_image.png"
+#         image.save(image_path)
+#         return send_file(image_path, mimetype='image/png')
+#     except Exception as e:
+#         return {"error": str(e)}, 500
 
 if __name__ == '__main__':
     logging.info('Starting app on port 5001')

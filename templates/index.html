@@ -16,6 +16,26 @@
 
 <p id="output-text"></p>
 
+<!-- Form for image generation -->
+<!-- <form id="generate-image-form">
+  <label for="image-input-text">Input Text for Image:</label><br>
+  <input type="text" id="image-input-text" name="image-input-text"><br>
+  <input type="submit" value="Generate Image">
+</form> -->
+
+<!-- Container for the generated image -->
+<!-- <img id="generated-image" /> -->
+
+<!-- Form for text-to-speech conversion -->
+<!-- <form id="generate-speech-form">
+  <label for="speech-input-text">Input Text for Speech:</label><br>
+  <input type="text" id="speech-input-text" name="speech-input-text"><br>
+  <input type="submit" value="Generate Speech">
+</form> -->
+
+<!-- Container for the generated speech -->
+<!-- <audio id="generated-speech" controls></audio> -->
+
 <script>
 $(document).ready(function() {
   $("#generate-form").submit(function(event) {
@@ -36,6 +56,40 @@ $(document).ready(function() {
       }
     });
   });
+
+  // $("#generate-image-form").submit(function(event) {
+  //   event.preventDefault();
+
+  //   var inputText = $("#image-input-text").val();
+
+  //   $.ajax({
+  //     url: 'http://9a93-73-97-128-250.ngrok-free.app/generate_image',
+  //     type: 'post',
+  //     contentType: 'application/json',
+  //     data: JSON.stringify({ 'input': inputText }),
+  //     success: function(data) {
+  //       // Assuming the server returns the image as a data URL
+  //       $("#generated-image").attr("src", data);
+  //     }
+  //   });
+  // });
+
+  // $("#generate-speech-form").submit(function(event) {
+  //   event.preventDefault();
+
+  //   var inputText = $("#speech-input-text").val();
+
+  //   $.ajax({
+  //     url: 'https://c45c-73-97-128-250.ngrok-free.app/generate_speech',
+  //     type: 'post',
+  //     contentType: 'application/json',
+  //     data: JSON.stringify({ 'input': inputText }),
+  //     success: function(data) {
+  //       // Assuming the server returns the audio as a data URL
+  //       $("#generated-speech").attr("src", data);
+  //     }
+  //   });
+  // });
 });
 </script>
 
