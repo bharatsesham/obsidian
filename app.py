@@ -1,14 +1,23 @@
 import time
 import logging
-from diffusers import DiffusionPipeline
+# from diffusers import DiffusionPipeline
+from constants import USE_OPENAI_API, OPENAI_URL, OPENAI_MODEL
+import traceback
+from dotenv import load_dotenv
+import requests
+import os
 from flask_cors import CORS
-from transformers import AutoTokenizer, AutoModelForCausalLM, AutoProcessor, SpeechT5ForTextToSpeech
+# AutoProcessor, SpeechT5ForTextToSpeech
+from transformers import AutoTokenizer, AutoModelForCausalLM
 from flask import Flask, request, render_template, make_response
 
 # Setup logging
 logging.basicConfig(filename='app.log', level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
 
+
+# Load the .env file
+load_dotenv()
 
 # Load the tokenizer and model
 logging.info('Loading tokenizer')
@@ -51,22 +60,58 @@ def home():
 
 @app.route('/generate', methods=['POST'])
 def generate():
-    logging.info('Generating text')
-    start_time = time.time()
-    data = request.json
-    input_ids = tokenizer.encode(data['input'], return_tensors='pt')
-    logging.info('Input text: ' + str(data['input']))
-    output = model.generate(input_ids, max_length=100)
-    text = tokenizer.decode(output[0], skip_special_tokens=True)
-    logging.debug(f'Generated text: {text}')
-    response = make_response({'generated_text': text}, 200)
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    app.logger.info(
-        f'Total time taken to generate text: {elapsed_time:.5f} seconds')
+    try:
+        logging.info('+++++++++++++++++++ Generating text +++++++++++++++++++')
+        start_time = time.time()
+        data = request.json
+        if not data or 'input' not in data:
+            raise ValueError('Invalid request: missing input text')
+        logging.info(f'Input text: {data["input"]}')
 
-    logging.debug(f'Response: {response}')
-    return response
+        if USE_OPENAI_API:
+            logging.info("Using OpenAI Codex model")
+            response = requests.post(OPENAI_URL,
+                                     headers={'Content-Type': 'application/json',
+                                              'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY").strip(chr(92))}'},
+                                     json={"model": OPENAI_MODEL,
+                                           "messages": [
+                                               {
+                                                   "role": "system",
+                                                   "content": "You are a helpful assistant."
+                                               },
+                                               {
+                                                   "role": "user",
+                                                   "content": data['input']
+                                               }
+                                           ]})
+            logging.info(response.content)
+            response.raise_for_status()
+            text = response.json()['choices'][0]['message']["content"]
+        else:
+            logging.info("Using custom model")
+            input_ids = tokenizer.encode(data['input'], return_tensors='pt')
+            output = model.generate(input_ids, max_length=100)
+            text = tokenizer.decode(output[0], skip_special_tokens=True)
+
+        logging.debug(f'Generated text: {text}')
+        response = make_response({'generated_text': text}, 200)
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        app.logger.info(
+            f'Total time taken to generate text: {elapsed_time:.5f} seconds')
+
+        logging.debug(f'Response: {response}')
+        return response
+
+    except Exception as e:
+        # log the error traceback
+        logging.error(traceback.format_exc())
+        # return a helpful error message to the client
+        return make_response({'error': str(e)}, 400)
+
+    finally:
+        app.logger.info(
+            f'+++++++++++++++++++ Service Request End +++++++++++++++++++')
 
 
 # @app.route('/generate_speech', methods=['POST'])
