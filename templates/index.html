@@ -17,14 +17,14 @@
 <p id="output-text"></p>
 
 <!-- Form for image generation -->
-<!-- <form id="generate-image-form">
+<form id="generate-image-form">
   <label for="image-input-text">Input Text for Image:</label><br>
   <input type="text" id="image-input-text" name="image-input-text"><br>
   <input type="submit" value="Generate Image">
-</form> -->
+</form>
 
 <!-- Container for the generated image -->
-<!-- <img id="generated-image" /> -->
+<img id="generated-image" />
 
 <!-- Form for text-to-speech conversion -->
 <!-- <form id="generate-speech-form">
@@ -48,7 +48,7 @@ $(document).ready(function() {
       url: 'https://ml-engine.ngrok.app//generate',
       type: 'post',
       contentType: 'application/json',
-      data: JSON.stringify({ 'input': inputText }),
+      data: JSON.stringify({ 'input': inputText, 'type': 'text' }),
       success: function(data) {
         console.log("Response received: ", data);
         $("#output-text").text(data.generated_text);
@@ -57,22 +57,21 @@ $(document).ready(function() {
     });
   });
 
-  // $("#generate-image-form").submit(function(event) {
-  //   event.preventDefault();
+  $("#generate-image-form").submit(function(event) {
+    event.preventDefault();
 
-  //   var inputText = $("#image-input-text").val();
+    var inputText = $("#image-input-text").val();
 
-  //   $.ajax({
-  //     url: 'http://9a93-73-97-128-250.ngrok-free.app/generate_image',
-  //     type: 'post',
-  //     contentType: 'application/json',
-  //     data: JSON.stringify({ 'input': inputText }),
-  //     success: function(data) {
-  //       // Assuming the server returns the image as a data URL
-  //       $("#generated-image").attr("src", data);
-  //     }
-  //   });
-  // });
+    $.ajax({
+      url: 'https://ml-engine.ngrok.app//generate',
+      type: 'post',
+      contentType: 'application/json',
+      data: JSON.stringify({ 'input': inputText, 'type': 'image' }),
+      success: function(data) {
+        $("#generated-image").attr("src", data.generated_image_url);
+      }
+    });
+  });
 
   // $("#generate-speech-form").submit(function(event) {
   //   event.preventDefault();
@@ -80,13 +79,13 @@ $(document).ready(function() {
   //   var inputText = $("#speech-input-text").val();
 
   //   $.ajax({
-  //     url: 'https://c45c-73-97-128-250.ngrok-free.app/generate_speech',
+  //     url: 'https://ml-engine.ngrok.app/generate',
   //     type: 'post',
   //     contentType: 'application/json',
-  //     data: JSON.stringify({ 'input': inputText }),
+  //     data: JSON.stringify({ 'input': inputText, 'type': 'audio' }),
   //     success: function(data) {
   //       // Assuming the server returns the audio as a data URL
-  //       $("#generated-speech").attr("src", data);
+  //       $("#generated-speech").attr("src", data.generated_speech);
   //     }
   //   });
   // });

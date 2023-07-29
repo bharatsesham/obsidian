@@ -10,6 +10,7 @@ from flask_cors import CORS
 # AutoProcessor, SpeechT5ForTextToSpeech
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from flask import Flask, request, render_template, make_response
+import openai
 
 # Setup logging
 logging.basicConfig(filename='app.log', level=logging.DEBUG,
@@ -61,13 +62,51 @@ def home():
 @app.route('/generate', methods=['POST'])
 def generate():
     try:
-        logging.info('+++++++++++++++++++ Generating text +++++++++++++++++++')
+        logging.info(
+            '+++++++++++++++++++ Service Request Start +++++++++++++++++++')
+
         start_time = time.time()
+
         data = request.json
         if not data or 'input' not in data:
             raise ValueError('Invalid request: missing input text')
-        logging.info(f'Input text: {data["input"]}')
 
+        if 'generate an image' in data['input'] or 'generate image' in data['input']:
+            type = data.get('type', 'image')
+        else:
+            # default to 'text' if 'type' is not provided
+            type = data.get('type', 'text')
+
+        if type not in ['text', 'audio', 'image']:
+            raise ValueError(
+                'Invalid request: type must be "text", "audio", or "image"')
+
+        if type == 'text':
+            return generate_text(data)
+        # elif type == 'audio':
+        #     return generate_audio(data['input'])
+        elif type == 'image':
+            return generate_image(data)
+        else:
+            raise ValueError(f'Unsupported type: {type}')
+
+    except Exception as e:
+        logging.error(traceback.format_exc())
+        return make_response({'error': str(e)}, 400)
+
+    finally:
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        app.logger.info(
+            f'Total time taken to generate text: {elapsed_time:.5f} seconds')
+
+        app.logger.info(
+            f'+++++++++++++++++++ Service Request End +++++++++++++++++++')
+
+
+def generate_text(data):
+    try:
+        logging.info(f'Generating Text. Input text: {data["input"]}')
         if USE_OPENAI_API:
             logging.info("Using OpenAI Codex model")
             response = requests.post(OPENAI_URL,
@@ -94,11 +133,7 @@ def generate():
             text = tokenizer.decode(output[0], skip_special_tokens=True)
 
         logging.debug(f'Generated text: {text}')
-        response = make_response({'generated_text': text}, 200)
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-        app.logger.info(
-            f'Total time taken to generate text: {elapsed_time:.5f} seconds')
+        response = make_response({'generated_text': text, 'type': 'text'}, 200)
 
         logging.debug(f'Response: {response}')
         return response
@@ -108,10 +143,6 @@ def generate():
         logging.error(traceback.format_exc())
         # return a helpful error message to the client
         return make_response({'error': str(e)}, 400)
-
-    finally:
-        app.logger.info(
-            f'+++++++++++++++++++ Service Request End +++++++++++++++++++')
 
 
 # @app.route('/generate_speech', methods=['POST'])
@@ -123,16 +154,32 @@ def generate():
 #     return {'generated_speech': output} # You might need to adjust this depending on how you want to use the output
 
 
-# @app.route('/generate_image', methods=['POST'])
-# def generate_image():
-#     try:
-#         data = request.json
-#         image = pipeline(data['input']).images[0]
-#         image_path = "/images/generated_image.png"
-#         image.save(image_path)
-#         return send_file(image_path, mimetype='image/png')
-#     except Exception as e:
-#         return {"error": str(e)}, 500
+def generate_image(data):
+    try:
+        logging.info(f'Generating Image. Input text: {data["input"]}')
+        data = request.json
+        openai.api_key = os.getenv("OPENAI_API_KEY")
+        openai_response = openai.Image.create(
+            prompt=data["input"],
+            n=1,
+            size="256x256"
+        )
+        image_url = openai_response['data'][0]['url']
+        response = make_response(
+            {'generated_image_url': image_url, 'type': 'image'}, 200)
+
+        # Add logging for successful response
+        logging.info(f"Generated image URL: {image_url}")
+        logging.debug(f'Response: {response.get_data()}')
+
+        return response
+
+    except Exception as e:
+        # Add logging for errors
+        logging.error(f"Error generating image: {str(e)}")
+
+        return {"error": str(e)}, 500
+
 
 if __name__ == '__main__':
     logging.info('Starting app on port 5001')
