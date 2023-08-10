@@ -4,7 +4,7 @@ from template_store import EMOTIONAL_COEFFICIENT_TEMPLATE
 
 
 class EmotionalCoefficientPrompt:
-    def __init__(self, happiness_setting, humor_setting, honesty_setting, trust_setting, sadness_setting, confidence_setting, **kwargs):
+    def __init__(self, happiness_setting, humor_setting, honesty_setting, trust_setting, saddness_setting, confidence_setting, **kwargs):
         self.happiness_setting = happiness_setting or DEFAULT_EMOTIONAL_COEFFICIENT_SETTINGS.get(
             'happiness_setting')
         self.humor_setting = humor_setting or DEFAULT_EMOTIONAL_COEFFICIENT_SETTINGS.get(
