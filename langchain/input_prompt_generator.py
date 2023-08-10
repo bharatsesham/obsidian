@@ -22,16 +22,24 @@ class PromptTokenLengthExceededException(Exception):
     pass
 
 
+class InvalidCurrentConversationRole(Exception):
+    pass
+
+
 class ChatBot:
     def __init__(self):
         self.conversation_message = []
 
+    # Main function to control prompt behaviour
     def input_data_parser(self, request):
         chat_prompt = ChatPromptTemplate.from_messages([])
 
         # Add System Message Prompt
         # chat_prompt.add(self.generate_system_prompt(
         #     request.user_emotional_settings))
+
+        # Final System Modified Prompt
+        # TODO: Add any final modification and other checks.
 
         # Add Previous Conversation Messages
         # chat_prompt.add(self.generate_conversation_prompt(
@@ -156,21 +164,15 @@ class ChatBot:
     """
 
     def generate_current_prompt(self, current_conversation):
-        # Initialize an empty ChatPromptTemplate
-        conversation_prompt = ChatPromptTemplate.from_messages([])
+        role = current_conversation.get('role')
+        content = current_conversation.get('content')
 
-        content = current_conversation['content']
-        role = current_conversation['role']
         if role == 'user':
-            # Create a HumanMessage object and add it to the conversation prompt
-            human_message = HumanMessage(content=content)
-            conversation_prompt.add(
-                HumanMessagePromptTemplate.from_message(human_message))
+            prompt_template = HumanMessagePromptTemplate(content=content)
         else:
-            raise InvalidCurrentConversationRole(
-                'The length of the generated prompt tokens exceeded 1000.')
+            raise InvalidCurrentConversationRole('Invalid conversation role')
 
-        return conversation_prompt
+        return ChatPromptTemplate.from_messages([prompt_template])
 
     def generate_system_prompt(self, user_emotional_settings):
         emotional_coefficient_prompt = self.emotional_coefficient_prompt(
