@@ -11,7 +11,7 @@ from flask_cors import CORS
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from flask import Flask, request, render_template, make_response
 import openai
-
+import langchain
 # Setup logging
 logging.basicConfig(filename='app.log', level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
@@ -109,23 +109,31 @@ def generate_text(data):
         logging.info(f'Generating Text. Input text: {data["input"]}')
         if USE_OPENAI_API:
             logging.info("Using OpenAI Codex model")
-            response = requests.post(OPENAI_URL,
-                                     headers={'Content-Type': 'application/json',
-                                              'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY").strip(chr(92))}'},
-                                     json={"model": OPENAI_MODEL,
-                                           "messages": [
-                                               {
-                                                   "role": "system",
-                                                   "content": "You are a helpful assistant."
-                                               },
-                                               {
-                                                   "role": "user",
-                                                   "content": data['input']
-                                               }
-                                           ]})
-            logging.info(response.content)
-            response.raise_for_status()
-            text = response.json()['choices'][0]['message']["content"]
+            # Set up OpenAI API credentials
+            openai.api_key = os.getenv("OPENAI_API_KEY")
+
+            # Construct messages for the conversation
+            messages = []
+            for conversation in data['input']['past_conversation']:
+                content = conversation['content']
+                role = conversation['role']
+                messages.append({"role": role, "content": content})
+
+            current_conversation_content = data['input']['current_conversation']['content']
+            current_conversation_role = data['input']['current_conversation']['role']
+            messages.append({"role": current_conversation_role,
+                            "content": current_conversation_content})
+
+            # Generate response from chat model
+            response = openai.ChatCompletion.create(
+                model=OPENAI_MODEL,  # Use the appropriate model name
+                messages=messages,
+                max_tokens=600,
+                api_key=openai.api_key
+            )
+
+            # Extract response from completed sequence
+            text = response.choices[0].message['content'].strip()
         else:
             logging.info("Using custom model")
             input_ids = tokenizer.encode(data['input'], return_tensors='pt')
