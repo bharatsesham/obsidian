@@ -26,15 +26,15 @@
 <!-- Container for the generated image -->
 <img id="generated-image" />
 
-<!-- Form for text-to-speech conversion -->
-<!-- <form id="generate-speech-form">
+<!-- Form for text-to-speech conversion --> 
+<form id="generate-speech-form">
   <label for="speech-input-text">Input Text for Speech:</label><br>
   <input type="text" id="speech-input-text" name="speech-input-text"><br>
   <input type="submit" value="Generate Speech">
-</form> -->
+</form>
 
 <!-- Container for the generated speech -->
-<!-- <audio id="generated-speech" controls></audio> -->
+<audio id="generated-speech" controls></audio>
 
 <script>
 $(document).ready(function() {
@@ -45,13 +45,19 @@ $(document).ready(function() {
     console.log("Input text received: ", inputText);
 
     $.ajax({
-      url: 'https://ml-engine.ngrok.app//generate',
+      url: 'http://localhost:5002//generate',
       type: 'post',
       contentType: 'application/json',
-      data: JSON.stringify({ 'input': inputText, 'type': 'text' }),
+      data: JSON.stringify(
+        { 'input': {
+        "current_conversation": {
+          "content": inputText,
+          "role": "user"
+        }}, 
+        'type': 'text' }),
       success: function(data) {
         console.log("Response received: ", data);
-        $("#output-text").text(data.generated_text);
+        $("#output-text").text(data.text.generated_text);
         console.log("Output text set: ", data.generated_text);
       }
     });
@@ -73,22 +79,23 @@ $(document).ready(function() {
     });
   });
 
-  // $("#generate-speech-form").submit(function(event) {
-  //   event.preventDefault();
+  $("#generate-speech-form").submit(function(event) {
+    event.preventDefault();
 
-  //   var inputText = $("#speech-input-text").val();
+    var inputText = $("#speech-input-text").val();
 
-  //   $.ajax({
-  //     url: 'https://ml-engine.ngrok.app/generate',
-  //     type: 'post',
-  //     contentType: 'application/json',
-  //     data: JSON.stringify({ 'input': inputText, 'type': 'audio' }),
-  //     success: function(data) {
-  //       // Assuming the server returns the audio as a data URL
-  //       $("#generated-speech").attr("src", data.generated_speech);
-  //     }
-  //   });
-  // });
+    $.ajax({
+      url: 'http://localhost:5002//generate_speech',
+      type: 'post',
+      contentType: 'application/json',
+      data: JSON.stringify({ 'input': inputText, 'type': 'audio' }),
+      success: function(data) {
+        var audio = new Audio();
+        audio.src = data.generated_speech;
+        audio.play();
+      }
+    });
+  });
 });
 </script>
 
