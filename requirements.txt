@@ -5,3 +5,6 @@ flask_cors==3.0.10
 python-dotenv
 openai
 langchain
+diffusers
+boto3
+werkzeug==2.2.2

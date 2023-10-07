@@ -368,4 +368,4 @@ def generate_video():
 
 if __name__ == '__main__':
     logging.info('Starting app on port 5001')
-    app.run(host='0.0.0.0', port=5002, debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=True)
