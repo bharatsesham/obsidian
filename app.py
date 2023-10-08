@@ -9,13 +9,15 @@ import requests
 import os
 from flask_cors import CORS
 # AutoProcessor, SpeechT5ForTextToSpeech
-from transformers import AutoTokenizer, AutoModelForCausalLM
+# from transformers import AutoTokenizer, AutoModelForCausalLM
 from flask import Flask, request, render_template, make_response, jsonify
 import openai
 import langchain
 import boto3
 import threading
 import base64
+import subprocess
+
 
 # Setup logging
 logging.basicConfig(filename='app.log', level=logging.DEBUG,
@@ -25,15 +27,15 @@ logging.basicConfig(filename='app.log', level=logging.DEBUG,
 # Load the .env file
 load_dotenv()
 
-# Load the tokenizer and model
-logging.info('Loading tokenizer')
-# tokenizer = AutoTokenizer.from_pretrained("gpt2")
-tokenizer = AutoTokenizer.from_pretrained(
-    "minhtoan/gpt3-small-finetune-cnndaily-news")
-logging.info('Loading model')
-# model = AutoModelForCausalLM.from_pretrained("gpt2")
-model = AutoModelForCausalLM.from_pretrained(
-    "minhtoan/gpt3-small-finetune-cnndaily-news")
+# # Load the tokenizer and model
+# logging.info('Loading tokenizer')
+# # tokenizer = AutoTokenizer.from_pretrained("gpt2")
+# tokenizer = AutoTokenizer.from_pretrained(
+#     "minhtoan/gpt3-small-finetune-cnndaily-news")
+# logging.info('Loading model')
+# # model = AutoModelForCausalLM.from_pretrained("gpt2")
+# model = AutoModelForCausalLM.from_pretrained(
+#     "minhtoan/gpt3-small-finetune-cnndaily-news")
 
 # # Load the SpeechT5ForTextToSpeech processor and model
 # processor_speecht5 = AutoProcessor.from_pretrained("microsoft/speecht5_tts")
@@ -76,7 +78,8 @@ def generate():
 
         types_to_generate = determine_generation_types(data['input'])
         processed_input = process_request_data(data, types_to_generate)
-        combined_response = combinator(data, processed_input)
+        combined_response = combinator(
+            data, processed_input, types_to_generate)
 
         return combined_response
 
@@ -149,7 +152,7 @@ def determine_generation_types(input_text):
     return types_to_generate
 
 
-def combinator(data, processed_input):
+def combinator(data, processed_input, types_to_generate):
     try:
         """
         Combines the outputs from the required generator functions.
@@ -163,7 +166,7 @@ def combinator(data, processed_input):
         response_data = {}
         threads = []
 
-        if 'text' in processed_input:
+        if 'text' in types_to_generate and processed_input['text'] is not None:
             text_response = generate_text(processed_input['text'])
             response_data['text'] = text_response.get_json()
 
@@ -174,19 +177,18 @@ def combinator(data, processed_input):
             image_thread.start()
             threads.append(image_thread)
 
-        if 'speech' in processed_input and text_response is not None:
-            speech_thread = threading.Thread(
-                target=generate_speech, args=(process_text_response(text_response),))
-            speech_thread.start()
-            threads.append(speech_thread)
+        if 'speech' in types_to_generate and text_response is not None:
+            speech_response = generate_speech(
+                text_response.get_json()['generated_text'])
+            response_data['speech'] = speech_response.get_json()
 
         # Wait for all started threads to complete
         for thread in threads:
             thread.join()
 
         # Retrieve the results from the threads
-        response_data['speech'] = speech_thread.result if "speech" in processed_input else None
-        response_data['image'] = speech_thread.result if "image" in processed_input else None
+        # response_data['speech'] = speech_thread.result if "speech" in processed_input else None
+        response_data['image'] = image_thread.result if "image" in processed_input else None
 
         if 'animation' in processed_input:
             animation_response = generate_animation(
@@ -251,9 +253,9 @@ def generate_text(data):
             text = response.choices[0].message['content'].strip()
         else:
             logging.info("Using custom model")
-            input_ids = tokenizer.encode(data['input'], return_tensors='pt')
-            output = model.generate(input_ids, max_length=100)
-            text = tokenizer.decode(output[0], skip_special_tokens=True)
+            # input_ids = tokenizer.encode(data['input'], return_tensors='pt')
+            # output = model.generate(input_ids, max_length=100)
+            # text = tokenizer.decode(output[0], skip_special_tokens=True)
 
         logging.debug(f'Generated text: {text}')
         response = make_response({'generated_text': text, 'type': 'text'}, 200)
@@ -366,6 +368,14 @@ def generate_video():
     return "video_url_here"
 
 
+def start_ngrok():
+    ngrok_cmd = "./ngrok authtoken $NGROK_AUTH_TOKEN && ./ngrok http --hostname=ml-engine.ngrok.app 5001"
+    return subprocess.Popen(ngrok_cmd, shell=True)
+
+
 if __name__ == '__main__':
+    # logging.info('Starting ngrok tunnel')
+    # start_ngrok()
+
     logging.info('Starting app on port 5001')
     app.run(host='0.0.0.0', port=5001, debug=True)

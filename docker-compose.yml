@@ -2,9 +2,13 @@ version: '3.4'
 
 services:
   dockerllm:
-    image: dockerllm
+    container_name: ai_container
+    image: docker-llm
     build:
       context: .
       dockerfile: ./Dockerfile
     ports:
       - 5001:5001
+      - 5002:5002
+    env_file:
+      - ./.env

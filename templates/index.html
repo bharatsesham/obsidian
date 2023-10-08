@@ -11,10 +11,18 @@
 <form id="generate-form">
   <label for="input-text">Input Text:</label><br>
   <input type="text" id="input-text" name="input-text"><br>
-  <input type="submit" value="Generate">
+  <input type="submit" value="Generate ALL">
 </form>
 
 <p id="output-text"></p>
+
+<form id="generate-text-form">
+  <label for="input-text-test">Input Text (Only):</label><br>
+  <input type="text" id="iinput-text-text" name="input-text-text"><br>
+  <input type="submit" value="Generate Text">
+</form>
+
+<p id="output-text-test"></p>
 
 <!-- Form for image generation -->
 <form id="generate-image-form">
@@ -45,7 +53,7 @@ $(document).ready(function() {
     console.log("Input text received: ", inputText);
 
     $.ajax({
-      url: 'http://localhost:5002//generate',
+      url: 'http://localhost:5001//generate',
       type: 'post',
       contentType: 'application/json',
       data: JSON.stringify(
@@ -58,6 +66,36 @@ $(document).ready(function() {
       success: function(data) {
         console.log("Response received: ", data);
         $("#output-text").text(data.text.generated_text);
+
+        // var audio = new Audio();
+        var audioElement = document.getElementById("generated-speech");
+        audioElement.src = data.speech.generated_speech;
+        audioElement.play();
+      }
+    });
+  });
+
+  //TODO: Fix this text only form
+  $("#generate-text-form").submit(function(event) {
+    event.preventDefault();
+
+    var inputText = $("#input-text-test").val();
+    console.log("Input text received: ", inputText);
+
+    $.ajax({
+      url: 'http://localhost:5001//generate_text',
+      type: 'post',
+      contentType: 'application/json',
+      data: JSON.stringify(
+        { 'input': {
+        "current_conversation": {
+          "content": inputText,
+          "role": "user"
+        }}, 
+        'type': 'text' }),
+      success: function(data) {
+        console.log("Response received: ", data);
+        $("#output-text-test").text(data.text.generated_text);
         console.log("Output text set: ", data.generated_text);
       }
     });
@@ -69,7 +107,7 @@ $(document).ready(function() {
     var inputText = $("#image-input-text").val();
 
     $.ajax({
-      url: 'https://ml-engine.ngrok.app//generate',
+      url: 'http://localhost:5001//generate_image',
       type: 'post',
       contentType: 'application/json',
       data: JSON.stringify({ 'input': inputText, 'type': 'image' }),
@@ -85,11 +123,14 @@ $(document).ready(function() {
     var inputText = $("#speech-input-text").val();
 
     $.ajax({
-      url: 'http://localhost:5002//generate_speech',
+      url: 'http://localhost:5001//generate_speech',
       type: 'post',
       contentType: 'application/json',
       data: JSON.stringify({ 'input': inputText, 'type': 'audio' }),
       success: function(data) {
+        console.log("Response received: ", data);
+        console.log("Type of data.generated_speech:", typeof data.generated_speech);
+
         var audio = new Audio();
         audio.src = data.generated_speech;
         audio.play();
