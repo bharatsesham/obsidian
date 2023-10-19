@@ -1,0 +1,41 @@
+version: '3.7'
+
+services:
+  superset:
+    build:
+      context: .
+      dockerfile: dockerfile.superset
+    container_name: superset
+    volumes:
+      - ./superset_config.py:/app/superset/superset_config.py
+      - ./superset-init.sh:/app/superset-init.sh
+      - ./superset:/home/superset
+    command: [ "/app/superset-init.sh" ]
+    ports:
+      - "8088:8088"
+    env_file:
+      - ./.env
+    depends_on:
+      # - postgres
+      - redis
+    platform: linux/x86_64
+
+  # TODO: Check for cache working process
+  redis:
+    image: redis:5.0.5-alpine
+    container_name: redis
+  #
+  # TODO: Add postgres instead of the default superset.db (SQLLite) for storing the superset metadata - Better Scalability
+  # postgres:
+  #   image: postgres:10
+  #   env_file:
+  #     - ./.env
+  #   volumes:
+  #     - ./postgres-data:/var/lib/postgresql/data
+
+  # TODO: Add Presto/Trino for better SQL querying. 
+
+  # TODO: Add LDAP 
+
+  # volumes: 
+  #   postgres-data:
