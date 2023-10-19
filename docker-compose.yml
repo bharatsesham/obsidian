@@ -2,11 +2,13 @@ version: '3.4'
 
 services:
   dockerllm:
-    container_name: ai_container
+    container_name: ai_engine
     image: docker-llm
     build:
       context: .
       dockerfile: ./Dockerfile
+    volumes:
+      - /Users/bharatsesham/Documents/speech_data:/data/speech_data
     ports:
       - 5001:5001
       - 5002:5002

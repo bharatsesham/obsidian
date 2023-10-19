@@ -1,3 +1,4 @@
+import datetime
 import time
 import logging
 # from diffusers import DiffusionPipeline
@@ -295,9 +296,41 @@ def generate_speech(data=None):
         return make_response({'error': str(error)}, 400)
 
     if "AudioStream" in response:
+        audio = response["AudioStream"].read()
+        # get file save location from env file
+        save_location = os.getenv("SPEECH_SAVE_LOCATION")
+
+        # create date folder structure
+        today = datetime.datetime.today()
+        date_folder = os.path.join(save_location, today.strftime('%Y-%m-%d'))
+        if not os.path.exists(date_folder):
+            os.makedirs(date_folder)
+
+        # generate timestamp for file name
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+
+        # create file name with timestamp
+        file_name = f'speech_{timestamp}.mp3'
+
+        # create full save path
+        save_path = os.path.join(date_folder, file_name)
+
+        # write audio data to file
+        with open(save_path, 'wb') as f:
+            f.write(audio)
+
+        # log file save operation
+        logging.info(f'Speech file saved to {save_path}')
+
+        # TODO: Emit metric to DynamoDB
+        # emit_metric_to_dynamodb(save_path)
+
+        #TODO: automatically delete files older than 10 days - Make this triggered seperately
+        delete_old_files(save_location, 10)
+
         # create a response object
         # Encode the audio data as a base64 string
-        audio_data = base64.b64encode(response["AudioStream"].read()).decode()
+        audio_data = base64.b64encode(audio).decode()
 
         # Create a JSON response with the audio data
         return jsonify({'generated_speech': 'data:audio/mp3;base64,' + audio_data})
@@ -373,9 +406,22 @@ def start_ngrok():
     return subprocess.Popen(ngrok_cmd, shell=True)
 
 
+def delete_old_files(save_location, days):
+    now = datetime.datetime.now()
+    threshold = now - datetime.timedelta(days=days)
+
+    for root, dirs, files in os.walk(save_location):
+        for file in files:
+            file_path = os.path.join(root, file)
+            file_mtime = datetime.datetime.fromtimestamp(os.path.getmtime(file_path))
+
+            if file_mtime < threshold:
+                os.remove(file_path)
+
+
 if __name__ == '__main__':
-    # logging.info('Starting ngrok tunnel')
-    # start_ngrok()
+    logging.info('Starting ngrok tunnel')
+    start_ngrok()
 
     logging.info('Starting app on port 5001')
     app.run(host='0.0.0.0', port=5001, debug=True)

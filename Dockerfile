@@ -21,9 +21,9 @@ RUN curl -Lo ngrok.zip https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-a
     rm ngrok.zip
 
 # Install Powerlevel10k
-RUN git clone --depth=1 https://github.com/romkatv/powerlevel10k.git /root/powerlevel10k
-RUN echo 'source /root/powerlevel10k/powerlevel10k.zsh-theme' >> ~/.zshrc
-RUN echo 'ZSH_THEME="powerlevel10k/powerlevel10k"' >> ~/.zshrc
+# RUN git clone --depth=1 https://github.com/romkatv/powerlevel10k.git /root/powerlevel10k
+# RUN echo 'source /root/powerlevel10k/powerlevel10k.zsh-theme' >> ~/.zshrc
+# RUN echo 'ZSH_THEME="powerlevel10k/powerlevel10k"' >> ~/.zshrc
 
 # Copy the current directory contents into the container at /app
 COPY . /app
