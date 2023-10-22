@@ -8,3 +8,10 @@ langchain
 diffusers
 boto3
 werkzeug==2.2.2
+
+
+
+# Scripts
+GPUtil
+psutil
+pysmart

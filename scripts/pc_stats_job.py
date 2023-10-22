@@ -2,19 +2,27 @@ import psutil
 import boto3
 import datetime
 from decimal import Decimal
+import GPUtil
+
 
 
 def get_pc_stats():
     """Returns a dictionary of PC stats."""
     current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    # Fetch GPU data
+    GPUs = GPUtil.getGPUs()
+    gpu = GPUs[0] if GPUs else None
+
     pc_stats = {
         "PCID": "bharatsesham-pc",
         "Timestamp": current_time,
-        "cpu_usage": Decimal(str(psutil.cpu_percent())),
-        "ram_usage": Decimal(str(psutil.virtual_memory().percent)),
-        "disk_usage": Decimal(str(psutil.disk_usage("/").percent)),
-        "network_traffic": Decimal(str(psutil.net_io_counters().bytes_sent + psutil.net_io_counters().bytes_recv)),
-        # "gpu_usage": psutil.gpu_percent(),
+        "Timestamp": current_time,
+        "cpu_usage": Decimal(format(psutil.cpu_percent(), '.1f')),
+        "ram_usage": Decimal(format(psutil.virtual_memory().percent, '.1f')),
+        "disk_usage": Decimal(format(psutil.disk_usage("/").percent, '.1f')),
+        "network_traffic": Decimal(format(psutil.net_io_counters().bytes_sent + psutil.net_io_counters().bytes_recv, '.1f')),
+        "gpu_usage": Decimal(format(gpu.load * 100, '.1f')) if gpu else None,
         # "fan_speed": psutil.sensors_fans()[0].current,
         # "temperature": psutil.sensors_temperatures()[0].current
     }
