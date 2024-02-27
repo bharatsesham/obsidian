@@ -1,0 +1,76 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: "EC2 instance for reverse proxy with Elastic IPs, IAM roles, and logging"
+Resources:
+  EC2SecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Security group for reverse proxy EC2 instance
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: "22"
+          ToPort: "22"
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: "80"
+          ToPort: "80"
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: "443"
+          ToPort: "443"
+          CidrIp: 0.0.0.0/0
+  ReverseProxyEC2Role:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: ReverseProxyEC2Role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
+        - "arn:aws:iam::aws:policy/AmazonRoute53FullAccess"
+  ReverseProxyEC2InstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Roles:
+        - !Ref ReverseProxyEC2Role
+  ReverseProxyEC2:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-0efcece6bed30fd98 #Ubuntu Server 22.04 LTS (HVM), SSD Volume Type
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+      IamInstanceProfile: !Ref ReverseProxyEC2InstanceProfile
+      KeyName: MyKeyPair
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          apt update
+          apt install -y nginx software-properties-common
+          add-apt-repository ppa:certbot/certbot -y
+          apt update
+          apt install -y certbot python3-certbot-nginx
+          certbot --nginx -d bharatsesham.com -d www.bharatsesham.com --agree-tos --no-eff-email --email sesham.bharat@gmail.com
+  ReverseProxyEIP:
+    Type: "AWS::EC2::EIP"
+    Properties:
+      Domain: vpc
+  ReverseProxyEIPAssociation:
+    Type: "AWS::EC2::EIPAssociation"
+    Properties:
+      AllocationId: !GetAtt ReverseProxyEIP.AllocationId
+      InstanceId: !Ref ReverseProxyEC2
+Outputs:
+  InstanceId:
+    Description: The Instance ID
+    Value: !Ref ReverseProxyEC2
+  PublicIP:
+    Description: The Public IP Address of the newly created EC2 instance
+    Value: !GetAtt ReverseProxyEC2.PublicIp
+  ElasticIP:
+    Description: The Elastic IP Address of the newly created EC2 instance
+    Value: !Ref ReverseProxyEIP

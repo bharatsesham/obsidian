@@ -325,7 +325,7 @@ def generate_speech(data=None):
         # TODO: Emit metric to DynamoDB
         # emit_metric_to_dynamodb(save_path)
 
-        #TODO: automatically delete files older than 10 days - Make this triggered seperately
+        # TODO: automatically delete files older than 10 days - Make this triggered seperately
         delete_old_files(save_location, 10)
 
         # create a response object
@@ -413,7 +413,8 @@ def delete_old_files(save_location, days):
     for root, dirs, files in os.walk(save_location):
         for file in files:
             file_path = os.path.join(root, file)
-            file_mtime = datetime.datetime.fromtimestamp(os.path.getmtime(file_path))
+            file_mtime = datetime.datetime.fromtimestamp(
+                os.path.getmtime(file_path))
 
             if file_mtime < threshold:
                 os.remove(file_path)
