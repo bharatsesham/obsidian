@@ -5,8 +5,8 @@ services:
     container_name: ai_engine
     image: docker-llm
     build:
-      context: .
-      dockerfile: services/ai_engine/Dockerfile
+      context: ./services/ai_engine
+      dockerfile: Dockerfile
     # TODO - Change to ENV variables
     volumes:
       - /Users/bharatsesham/Documents/speech_data:/data/speech_data
@@ -18,8 +18,8 @@ services:
 
   superset:
     build:
-      context: .
-      dockerfile: services/superset/dockerfile.superset
+      context: ./services/superset
+      dockerfile: dockerfile.superset
     container_name: superset
     volumes:
       - ./services/superset/superset_config.py:/app/superset/superset_config.py
