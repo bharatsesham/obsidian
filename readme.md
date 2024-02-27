@@ -55,6 +55,28 @@ In this structure, each model has its own folder, which contains subfolders for 
 
 In addition to the 3D models and animations, you might also need data for the AI to use when interacting with the user. This could include a language model for understanding and generating text, as well as a database of user preferences and history for personalizing the AI's responses.
 
+**Dev - Prod**
+
+In Development:
+
+Developers can use docker-compose.dev.yml to run all services with configurations suitable for development.
+The init-dev.sh script can set up any necessary development environment details such as building images, starting containers, etc.
+
+In Production:
+
+docker-compose.prod.yml would contain configurations for production, such as setting up volumes for persistence, environment variables for production databases, etc.
+The init-prod.sh script would handle setting up the production environment.
+Adding a New Service:
+
+To add a new service, create a new directory under services/ with its Dockerfile and any other service-specific files.
+Include the service in the docker-compose.dev.yml and docker-compose.prod.yml with the necessary overrides for each environment.
+Running Services:
+
+For development, one would run scripts/init-dev.sh or docker-compose -f docker-compose.dev.yml up.
+For production, one would run scripts/init-prod.sh or docker-compose -f docker-compose.prod.yml up.
+Remember, it's important to update the README.md with instructions for setting up and running the services in both development and production environments. This structure should allow for easy scaling and management of your services within the repository.
+
+
 **Quick Guide to Run Docker Commands.**
 
 Introduction:

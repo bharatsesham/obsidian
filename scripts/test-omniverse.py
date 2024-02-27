@@ -1,8 +1,9 @@
 import requests
 import json
 
-HOSTED_IP = ''
-AUDIO_ROOT = ""
+HOSTED_IP = 'http://192.168.1.100:8011'
+# AUDIO_ROOT = "\\\\192.168.1.101\\bharatsesham\\Documents\\audio2face_data\\"
+AUDIO_ROOT = "C:\\Users\\bharatsesham\\Documents\\audio2face_data\\"
 relative_audio_path='speech_danny_demo.mp3'
 EXPORT_DIRECTORY = ''
 relative_audio_path=''

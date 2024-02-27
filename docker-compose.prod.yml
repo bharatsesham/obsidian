@@ -1,0 +1,42 @@
+version: '3.4'
+
+services:
+  dockerllm:
+    container_name: ai_engine
+    image: docker-llm
+    build:
+      context: .
+      dockerfile: services/ai_engine/Dockerfile
+    # TODO - Change to ENV variables
+    volumes:
+      - /Users/bharatsesham/Documents/speech_data:/data/speech_data
+    ports:
+      - 5001:5001
+      - 5002:5002
+    env_file:
+      - ./.env
+
+  superset:
+    build:
+      context: .
+      dockerfile: services/superset/dockerfile.superset
+    container_name: superset
+    volumes:
+      - ./services/superset/superset_config.py:/app/superset/superset_config.py
+      - ./services/superset/superset-init.sh:/app/superset-init.sh
+      - ./services/superset/metadata:/home/superset
+    command: [ "/app/superset-init.sh" ]
+    ports:
+      - "8088:8088"
+    env_file:
+      - ./.env
+    depends_on:
+      # TODO: Change DB to postgres for scalability
+      # - postgres
+      - redis
+    platform: linux/x86_64
+
+  # TODO: Check for cache working process
+  redis:
+    image: redis:5.0.5-alpine
+    container_name: redis

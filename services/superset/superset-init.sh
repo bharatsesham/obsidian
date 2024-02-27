@@ -2,7 +2,6 @@
 
 superset db upgrade
 
-
 # Add your database connection
 superset set_database_uri --database_name=other --uri=dynamodb://${AWS_ACCESS_KEY}:${AWS_SECRET_KEY}@dynamodb.us-west-2.amazonaws.com:443?connector=superset
 
