@@ -41,14 +41,37 @@ services:
     image: redis:5.0.5-alpine
     container_name: redis
 
-  # TODO: Make a custom network for all the services
   nginx:
     image: nginx:latest
     container_name: nginx_reverse_proxy
     volumes:
       - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - certbot-challenges:/etc/letsencrypt
+      - certbot-challenges:/var/www/certbot
     ports:
       - "80:80"
+      - "443:443"
     depends_on:
       - dockerllm
       - superset
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - certbot-challenges:/var/www/certbot
+      - certbot-challenges:/etc/letsencrypt
+      - ./infrastructure/certbot/init-certbot.sh:/init-certbot.sh
+      # TODO - Made it a service -> seperate docker and renewal logic. Check if ngnix update when creds are renewd. Intial Cred logic is to 
+    entrypoint: "/bin/sh -c '/init-certbot.sh'"
+    depends_on:
+      - nginx
+    environment:
+      - CERTBOT_EMAIL=bharat.sesham11@gmail.com
+      - CERTBOT_DOMAIN1=api.bharatsesham.com
+      - CERTBOT_DOMAIN2=superset.bharatsesham.com
+
+volumes:
+  certbot-challenges:
+# TODO: Make a custom network for all the services
+
