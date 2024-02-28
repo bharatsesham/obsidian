@@ -61,8 +61,9 @@ services:
     volumes:
       - certbot-challenges:/var/www/certbot
       - certbot-challenges:/etc/letsencrypt
+      - ./infrastructure/certbot/init-certbot.sh:/init-certbot.sh
       # TODO - Made it a service -> seperate docker and renewal logic. Check if ngnix update when creds are renewd. Intial Cred logic is to 
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot --webroot-path=/var/www/certbot --email $${CERTBOT_EMAIL} -d $${CERTBOT_DOMAIN1} -d $${CERTBOT_DOMAIN2} --deploy-hook \"nginx -s reload\"; sleep 12h & wait $${!}; done;'"
+    entrypoint: "/bin/sh -c '/init-certbot.sh'"
     depends_on:
       - nginx
     environment:
