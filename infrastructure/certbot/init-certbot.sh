@@ -22,7 +22,7 @@ done
 # Renewal loop
 while :; do
     certbot renew --webroot --webroot-path=/var/www/certbot --deploy-hook "nginx -s reload"
-    # Wait for30 mins before checking for renewal again
+    # Wait for 30 mins before checking for renewal again
     sleep 12m &
     wait $!
 done

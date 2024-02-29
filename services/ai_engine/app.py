@@ -421,8 +421,8 @@ def delete_old_files(save_location, days):
 
 
 if __name__ == '__main__':
-    logging.info('Starting ngrok tunnel')
-    start_ngrok()
+    # logging.info('Starting ngrok tunnel')
+    # start_ngrok()
 
     logging.info('Starting app on port 5001')
     app.run(host='0.0.0.0', port=5001, debug=True)
