@@ -1,27 +1,27 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Text Generation with GPT-2</title>
+  <title>AI Engine</title>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 <body>
 
-<h1>Text Generation with GPT-2</h1>
+<h1>Response Generation with GPT-3.5</h1>
 
+<!-- Form for response generation -->
 <form id="generate-form">
   <label for="input-text">Input Text:</label><br>
   <input type="text" id="input-text" name="input-text"><br>
-  <input type="submit" value="Generate ALL">
+  <input type="submit" value="Generate Response">
 </form>
-
 <p id="output-text"></p>
 
+<!-- Form for text generation -->
 <form id="generate-text-form">
-  <label for="input-text-test">Input Text (Only):</label><br>
-  <input type="text" id="iinput-text-text" name="input-text-text"><br>
+  <label for="input-test-text">Input Text (Only):</label><br>
+  <input type="text" id="input-test-text" name="input-test-text"><br>
   <input type="submit" value="Generate Text">
 </form>
-
 <p id="output-text-test"></p>
 
 <!-- Form for image generation -->
@@ -30,7 +30,6 @@
   <input type="text" id="image-input-text" name="image-input-text"><br>
   <input type="submit" value="Generate Image">
 </form>
-
 <!-- Container for the generated image -->
 <img id="generated-image" />
 
@@ -40,12 +39,12 @@
   <input type="text" id="speech-input-text" name="speech-input-text"><br>
   <input type="submit" value="Generate Speech">
 </form>
-
 <!-- Container for the generated speech -->
 <audio id="generated-speech" controls></audio>
 
 <script>
 $(document).ready(function() {
+  // <!-- Callback to generated response -->
   $("#generate-form").submit(function(event) {
     event.preventDefault();
 
@@ -53,7 +52,7 @@ $(document).ready(function() {
     console.log("Input text received: ", inputText);
 
     $.ajax({
-      url: 'http://localhost:5001//generate',
+      url: 'http://localhost:5001/generate',
       type: 'post',
       contentType: 'application/json',
       data: JSON.stringify(
@@ -75,15 +74,16 @@ $(document).ready(function() {
     });
   });
 
+  // <!-- Callback to generated text -->  
   //TODO: Fix this text only form
   $("#generate-text-form").submit(function(event) {
     event.preventDefault();
 
-    var inputText = $("#input-text-test").val();
+    var inputText = $("#input-test-text").val();
     console.log("Input text received: ", inputText);
 
     $.ajax({
-      url: 'http://localhost:5001//generate_text',
+      url: 'http://localhost:5001/generate_text',
       type: 'post',
       contentType: 'application/json',
       data: JSON.stringify(
@@ -95,35 +95,39 @@ $(document).ready(function() {
         'type': 'text' }),
       success: function(data) {
         console.log("Response received: ", data);
-        $("#output-text-test").text(data.text.generated_text);
+        $("#output-text-test").text(data.generated_text);
         console.log("Output text set: ", data.generated_text);
       }
     });
   });
 
+  // <!-- Callback to generated image -->
   $("#generate-image-form").submit(function(event) {
     event.preventDefault();
-
     var inputText = $("#image-input-text").val();
+    console.log("Input image text received: ", inputText);
 
     $.ajax({
-      url: 'http://localhost:5001//generate_image',
+      url: 'http://localhost:5001/generate_image',
       type: 'post',
       contentType: 'application/json',
       data: JSON.stringify({ 'input': inputText, 'type': 'image' }),
       success: function(data) {
+        console.log("Response received: ", data);
+        console.log("Generated Image:", typeof data.generated_image_url);
         $("#generated-image").attr("src", data.generated_image_url);
       }
     });
   });
 
+  // <!-- Callback to generated speech -->
   $("#generate-speech-form").submit(function(event) {
     event.preventDefault();
-
     var inputText = $("#speech-input-text").val();
+    console.log("Input speech text received: ", inputText);
 
     $.ajax({
-      url: 'http://localhost:5001//generate_speech',
+      url: 'http://localhost:5001/generate_speech',
       type: 'post',
       contentType: 'application/json',
       data: JSON.stringify({ 'input': inputText, 'type': 'audio' }),

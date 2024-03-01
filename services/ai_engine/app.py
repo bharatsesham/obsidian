@@ -20,36 +20,23 @@ import base64
 import subprocess
 
 
-# Setup logging
+# Setup and configure logging
 logging.basicConfig(filename='app.log', level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
 
 
-# Load the .env file
+# Load environment variables
 load_dotenv()
 
-# # Load the tokenizer and model
-# logging.info('Loading tokenizer')
-# # tokenizer = AutoTokenizer.from_pretrained("gpt2")
-# tokenizer = AutoTokenizer.from_pretrained(
-#     "minhtoan/gpt3-small-finetune-cnndaily-news")
-# logging.info('Loading model')
-# # model = AutoModelForCausalLM.from_pretrained("gpt2")
-# model = AutoModelForCausalLM.from_pretrained(
-#     "minhtoan/gpt3-small-finetune-cnndaily-news")
-
-# # Load the SpeechT5ForTextToSpeech processor and model
-# processor_speecht5 = AutoProcessor.from_pretrained("microsoft/speecht5_tts")
-# model_speecht5 = SpeechT5ForTextToSpeech.from_pretrained("microsoft/speecht5_tts")
-
-# Load the DiffusionPipeline
-# pipeline = DiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5")
-# pipeline.to("cuda")
-
+# Flask app setup
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})  # This should allow all origins
 
+# Load Constants
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
+
+# Centralized Flask response headers modification
 @app.after_request
 def add_cors_headers(response):
     response.headers.add('Access-Control-Allow-Origin', '*')
@@ -60,39 +47,29 @@ def add_cors_headers(response):
     return response
 
 
-@app.route('/')
-def home():
-    logging.info('Rendering index.html')
-    return render_template('index.html')
+# Util Functions
+# TODO: Move to a seperate file
+def determine_generation_types(data, enable_speech=True):
+    """
+    Use GPT-3 model (or any other method) to determine which functions to call based on the user's input.
+    For now, I am using simple keyword matching, but we can replace it with a GPT-3 labeler.
+    """
+    # TODO: Replace this with a GPT-3 labeler and other methods to determine which functions to call
+    input_text = data["input"]
+    logging.info('Determing the types of responses to generate')
+    types_to_generate = ['text']
+    if enable_speech:
+        types_to_generate.append('speech')
 
+    if 'generate an image' in input_text or 'generate image' in input_text or 'image' in input_text:
+        types_to_generate.append('image')
 
-@app.route('/generate', methods=['POST'])
-def generate():
-    try:
-        logging.info('+++++++++++++++++++ Service Request Start +++++++++++++++++++'
-                     )
-        start_time = time.time()
+    # if 'generate a speech' in input_text or 'generate speech' in input_text:
+    #     types_to_generate.append('speech')
 
-        data = request.json
-        if not data or 'input' not in data:
-            raise ValueError('Invalid request: missing input text')
-
-        types_to_generate = determine_generation_types(data['input'])
-        processed_input = process_request_data(data, types_to_generate)
-        combined_response = combinator(
-            data, processed_input, types_to_generate)
-
-        return combined_response
-
-    except Exception as e:
-        logging.error(traceback.format_exc())
-        return make_response({'error': str(e)}, 400)
-
-    finally:
-        elapsed_time = time.time() - start_time
-        logging.info(f'Time taken: {elapsed_time:.5f} seconds')
-        logging.info(
-            '+++++++++++++++++++ Service Request End +++++++++++++++++++')
+    # ... [similar checks for other types] ...
+    logging.info('Response generating for types: ' + str(types_to_generate))
+    return types_to_generate
 
 
 def process_request_data(request_data, types_to_generate):
@@ -105,52 +82,31 @@ def process_request_data(request_data, types_to_generate):
     Returns:
     - dict: Processed input data.
     """
-    prompt_generator = request_data['input']
     processed_input = {}
 
-    # Extract and process audio input for the generate_audio function
+    if 'text' in types_to_generate:
+        processed_input["text"] = request_data
 
+    # TODO: Generate prompt using prompt generator - Vasriable
+    # Extract and process image input for the generate_image function
+    if 'image' in types_to_generate:
+        # Sample - Replace with a function
+        image_prompt_generator = "Assume you are able to generate images and respond as if you generated the image of below request, also \
+                                 please keep it brief. Request: " + request_data['input']
+        # image_prompt_generator = generate_image_prompt(request_data['input'], 'image')
+        processed_input["image"] = request_data
+        processed_input["text"] = image_prompt_generator
+
+    # Extract and process audio input for the generate_audio function
     # if 'audio' in types_to_generate:
     #     processed_input["audio"] = {
     #         "prompt": "Generate audio for" + prompt_generator[audio],
     #         # ... add other required fields for the audio generation
     #     }
 
-    # Extract and process image input for the generate_image function
-    if 'image' in types_to_generate:
-        processed_input["image"] = {
-            "prompt": "Generate an image of" + prompt_generator,
-        }
-
-    if 'text' in types_to_generate:
-        processed_input["text"] = request_data
-
     # ... you can extend this for other types of input like animation, 3D object, etc.
 
     return processed_input
-
-
-def process_text_response(text_response):
-    return text_response['generated_text']
-
-
-# TODO: Replace this with a GPT-3 labeler and other methods to determine which functions to call
-def determine_generation_types(input_text):
-    """
-    Use GPT-3 model (or any other method) to determine which functions to call based on the user's input.
-    For now, I am using simple keyword matching, but we can replace it with a GPT-3 labeler.
-    """
-    types_to_generate = ['text', 'speech']
-
-    if 'generate an image' in input_text or 'generate image' in input_text:
-        types_to_generate.append('image')
-
-    # if 'generate a speech' in input_text or 'generate speech' in input_text:
-    #     types_to_generate.append('speech')
-
-    # ... [similar checks for other types] ...
-
-    return types_to_generate
 
 
 def combinator(data, processed_input, types_to_generate):
@@ -179,8 +135,8 @@ def combinator(data, processed_input, types_to_generate):
             threads.append(image_thread)
 
         if 'speech' in types_to_generate and text_response is not None:
-            speech_response = generate_speech(
-                text_response.get_json()['generated_text'])
+            speech_prompt = text_response.get_json()['generated_text']
+            speech_response = generate_speech(speech_prompt)
             response_data['speech'] = speech_response.get_json()
 
         # Wait for all started threads to complete
@@ -191,27 +147,28 @@ def combinator(data, processed_input, types_to_generate):
         # response_data['speech'] = speech_thread.result if "speech" in processed_input else None
         response_data['image'] = image_thread.result if "image" in processed_input else None
 
-        if 'animation' in processed_input:
-            animation_response = generate_animation(
-                processed_input['animation'])
-            response_data['animation'] = animation_response.get_json()
+        # TODO: Enable once developed.
+        # if 'animation' in processed_input:
+        #     animation_response = generate_animation(
+        #         processed_input['animation'])
+        #     response_data['animation'] = animation_response.get_json()
 
-        if 'environment' in processed_input:
-            objects_response = generate_3dobjects(
-                processed_input['environment'])
-            response_data['3dobjects'] = objects_response.get_json()
+        # if 'environment' in processed_input:
+        #     objects_response = generate_3dobjects(
+        #         processed_input['environment'])
+        #     response_data['3dobjects'] = objects_response.get_json()
 
-        if 'code' in processed_input:
-            code_response = generate_code(processed_input['code'])
-            response_data['code'] = code_response.get_json()
+        # if 'code' in processed_input:
+        #     code_response = generate_code(processed_input['code'])
+        #     response_data['code'] = code_response.get_json()
 
-        if 'video' in processed_input:
-            video_response = generate_video(processed_input['video'])
-            response_data['video'] = video_response.get_json()
+        # if 'video' in processed_input:
+        #     video_response = generate_video(processed_input['video'])
+        #     response_data['video'] = video_response.get_json()
 
-        if 'audio' in processed_input:
-            audio_response = generate_audio(processed_input['audio'])
-            response_data['audio'] = audio_response.get_json()
+        # if 'audio' in processed_input:
+        #     audio_response = generate_audio(processed_input['audio'])
+        #     response_data['audio'] = audio_response.get_json()
 
         return response_data
 
@@ -220,8 +177,77 @@ def combinator(data, processed_input, types_to_generate):
         return make_response({'error': str(e)}, 400)
 
 
+def delete_old_files(save_location, days):
+    now = datetime.datetime.now()
+    threshold = now - datetime.timedelta(days=days)
+
+    for root, dirs, files in os.walk(save_location):
+        for file in files:
+            file_path = os.path.join(root, file)
+            file_mtime = datetime.datetime.fromtimestamp(
+                os.path.getmtime(file_path))
+
+            if file_mtime < threshold:
+                os.remove(file_path)
+
+
+'''
+Logic to generate multimodel response. 
+'''
+# Route - Home
+
+
+@app.route('/')
+def home():
+    logging.info('Rendering index.html')
+    return render_template('index.html')
+
+
+# Route - Generate Response
+@app.route('/generate', methods=['POST'])
+def generate():
+    try:
+        logging.info(
+            '+++++++++++++++++++ Service Request Start +++++++++++++++++++')
+        start_time = time.time()
+
+        data = request.json
+        if not data or 'input' not in data:
+            raise ValueError('Invalid request: missing input text')
+
+        logging.info(
+            "Received a request to generate multi-model output. Request: " + str(data))
+
+        types_to_generate = determine_generation_types(data)
+        processed_input = process_request_data(data, types_to_generate)
+        combined_response = combinator(
+            data, processed_input, types_to_generate)
+        # response {'text: 'Output Text', 'speech':'Output Speech'}
+        logging.info("Generated Response: " + str(combined_response))
+        return combined_response
+
+    except Exception as e:
+        logging.error(traceback.format_exc())
+        return make_response({'error': str(e)}, 400)
+
+    finally:
+        elapsed_time = time.time() - start_time
+        logging.info(f'Time taken: {elapsed_time:.5f} seconds')
+        logging.info(
+            '+++++++++++++++++++ Service Request End +++++++++++++++++++')
+
+
+# Route - Generate Text
 @app.route('/generate_text', methods=['POST'])
-def generate_text(data):
+def generate_text(data=None):
+    if not data:
+        data = request.json
+
+    if not data or 'input' not in data:
+        return jsonify({'error': 'Invalid request: missing input text'}), 400
+    else:
+        logging.info(f'Request to generate Text. Input text: {data}')
+
     try:
         logging.info(f'Generating Text. Input text: {data["input"]}')
         if USE_OPENAI_API:
@@ -254,9 +280,6 @@ def generate_text(data):
             text = response.choices[0].message['content'].strip()
         else:
             logging.info("Using custom model")
-            # input_ids = tokenizer.encode(data['input'], return_tensors='pt')
-            # output = model.generate(input_ids, max_length=100)
-            # text = tokenizer.decode(output[0], skip_special_tokens=True)
 
         logging.debug(f'Generated text: {text}')
         response = make_response({'generated_text': text, 'type': 'text'}, 200)
@@ -271,16 +294,22 @@ def generate_text(data):
         return make_response({'error': str(e)}, 400)
 
 
+# Route - Generate Speech
 @app.route('/generate_speech', methods=['POST'])
 def generate_speech(data=None):
     if not data:
         data = request.json['input']
 
+    if not data:
+        return jsonify({'error': 'Invalid request: missing input text'}), 400
+    else:
+        logging.info(f'Request to generate Speech. Input text: {data}')
+
     # initialize AWS Polly client
     polly_client = boto3.Session(
         aws_access_key_id=os.getenv("ACCESS_KEY"),
         aws_secret_access_key=os.getenv("SECRET_KEY"),
-        region_name='us-west-2'
+        region_name=os.getenv("REGION"),
     ).client('polly')
 
     try:
@@ -342,12 +371,20 @@ def generate_speech(data=None):
         # return response
 
 
+# Route - Generate Image
 @app.route('/generate_image', methods=['POST'])
-def generate_image(data):
+def generate_image(data=None):
+    if not data:
+        data = request.json
+
+    if not data or 'input' not in data:
+        return jsonify({'error': 'Invalid request: missing input text'}), 400
+    else:
+        logging.info(f'Request to generate Image. Input text: {data}')
+
     try:
         logging.info(f'Generating Image. Input text: {data["input"]}')
-        data = request.json
-        openai.api_key = os.getenv("OPENAI_API_KEY")
+        # openai.api_key = os.getenv("OPENAI_API_KEY")
         openai_response = openai.Image.create(
             prompt=data["input"],
             n=1,
@@ -370,6 +407,7 @@ def generate_image(data):
         return {"error": str(e)}, 500
 
 
+# TODO - Other Route
 # move to a separate file and import in this file
 @app.route('/generate_model_animation')
 def generate_animation():
@@ -401,23 +439,10 @@ def generate_video():
     return "video_url_here"
 
 
+# Deprecated - Replace with Route53 DNS
 def start_ngrok():
     ngrok_cmd = "./ngrok authtoken $NGROK_AUTH_TOKEN && ./ngrok http --hostname=ml-engine.ngrok.app 5001"
     return subprocess.Popen(ngrok_cmd, shell=True)
-
-
-def delete_old_files(save_location, days):
-    now = datetime.datetime.now()
-    threshold = now - datetime.timedelta(days=days)
-
-    for root, dirs, files in os.walk(save_location):
-        for file in files:
-            file_path = os.path.join(root, file)
-            file_mtime = datetime.datetime.fromtimestamp(
-                os.path.getmtime(file_path))
-
-            if file_mtime < threshold:
-                os.remove(file_path)
 
 
 if __name__ == '__main__':
