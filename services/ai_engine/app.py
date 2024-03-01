@@ -18,6 +18,7 @@ import boto3
 import threading
 import base64
 import subprocess
+import copy
 
 
 # Setup and configure logging
@@ -61,7 +62,9 @@ def determine_generation_types(data, enable_speech=True):
     if enable_speech:
         types_to_generate.append('speech')
 
-    if 'generate an image' in input_text or 'generate image' in input_text or 'image' in input_text:
+    current_conversation = str(
+        data['input']['current_conversation']['content'])
+    if 'generate an image' in current_conversation or 'generate image' in current_conversation or 'image' in input_text:
         types_to_generate.append('image')
 
     # if 'generate a speech' in input_text or 'generate speech' in input_text:
@@ -91,11 +94,15 @@ def process_request_data(request_data, types_to_generate):
     # Extract and process image input for the generate_image function
     if 'image' in types_to_generate:
         # Sample - Replace with a function
+        current_conversation = str(
+            request_data['input']['current_conversation']['content'])
         image_prompt_generator = "Assume you are able to generate images and respond as if you generated the image of below request, also \
-                                 please keep it brief. Request: " + request_data['input']
+            please keep it brief. Request: " + current_conversation
+        modified_request_data = copy.deepcopy(request_data)
+        modified_request_data['input']['current_conversation']['content'] = image_prompt_generator
         # image_prompt_generator = generate_image_prompt(request_data['input'], 'image')
-        processed_input["image"] = request_data
-        processed_input["text"] = image_prompt_generator
+        processed_input["image"] = current_conversation
+        processed_input["text"] = modified_request_data
 
     # Extract and process audio input for the generate_audio function
     # if 'audio' in types_to_generate:
@@ -127,12 +134,17 @@ def combinator(data, processed_input, types_to_generate):
             text_response = generate_text(processed_input['text'])
             response_data['text'] = text_response.get_json()
 
-        if 'image' in processed_input:
-            # Create threads to run generate_audio and generate_image functions asynchronously
-            image_thread = threading.Thread(
-                target=generate_image, args=(processed_input['image']))
-            image_thread.start()
-            threads.append(image_thread)
+        # TODO: Add threading or concurrent.futures to parallel process.
+        # if 'image' in processed_input:
+        #     # Create threads to run generate_audio and generate_image functions asynchronously
+        #     image_thread = threading.Thread(
+        #         target=lambda: generate_image(processed_input['image']))
+        #     image_thread.start()
+        #     threads.append(image_thread)
+
+        if 'image' in types_to_generate and processed_input['image'] is not None:
+            image_response = generate_image(processed_input['image'])
+            response_data['image'] = image_response.get_json()
 
         if 'speech' in types_to_generate and text_response is not None:
             speech_prompt = text_response.get_json()['generated_text']
@@ -145,7 +157,7 @@ def combinator(data, processed_input, types_to_generate):
 
         # Retrieve the results from the threads
         # response_data['speech'] = speech_thread.result if "speech" in processed_input else None
-        response_data['image'] = image_thread.result if "image" in processed_input else None
+        # response_data['image'] = image_thread.result if "image" in processed_input else None
 
         # TODO: Enable once developed.
         # if 'animation' in processed_input:
@@ -375,18 +387,18 @@ def generate_speech(data=None):
 @app.route('/generate_image', methods=['POST'])
 def generate_image(data=None):
     if not data:
-        data = request.json
+        data = request.json["input"]
 
-    if not data or 'input' not in data:
+    if not data:
         return jsonify({'error': 'Invalid request: missing input text'}), 400
     else:
         logging.info(f'Request to generate Image. Input text: {data}')
 
     try:
-        logging.info(f'Generating Image. Input text: {data["input"]}')
+        logging.info(f'Generating Image. Input text: {data}')
         # openai.api_key = os.getenv("OPENAI_API_KEY")
         openai_response = openai.Image.create(
-            prompt=data["input"],
+            prompt=data,
             n=1,
             size="256x256"
         )
