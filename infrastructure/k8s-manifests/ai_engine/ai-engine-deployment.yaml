@@ -125,6 +125,13 @@ spec:
                 configMapKeyRef:
                   key: relative_audio_path
                   name: env
+            - name: NGROK_AUTH_TOKEN
+              valueFrom:
+                configMapKeyRef:
+                  name: env
+                  key: NGROK_AUTH_TOKEN
+                  optional: true 
+
             - name: SUPERSET_SECRET_KEY
               valueFrom:
                 secretKeyRef:
