@@ -3,3 +3,4 @@ app.log
 .vscode/
 __pycache__/
 *.DS_Store
+infrastructure/k8s-manifests/secrets
