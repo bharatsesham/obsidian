@@ -1,0 +1,193 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.prod.yml
+    kompose.version: 1.32.0 (765fde254)
+  labels:
+    io.kompose.service: superset
+  name: superset
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: superset
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose.prod.yml
+        kompose.version: 1.32.0 (765fde254)
+      labels:
+        io.kompose.network/obsidian-default: "true"
+        io.kompose.service: superset
+    spec:
+      containers:
+        - args:
+            - /app/superset-init.sh
+          env:
+            - name: ACCESS_KEY
+              valueFrom:
+                configMapKeyRef:
+                  key: ACCESS_KEY
+                  name: env
+            - name: ADMIN_EMAIL
+              valueFrom:
+                configMapKeyRef:
+                  key: ADMIN_EMAIL
+                  name: env
+            - name: ADMIN_FIRSTNAME
+              valueFrom:
+                configMapKeyRef:
+                  key: ADMIN_FIRSTNAME
+                  name: env
+            - name: ADMIN_LASTNAME
+              valueFrom:
+                configMapKeyRef:
+                  key: ADMIN_LASTNAME
+                  name: env
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  key: ADMIN_PASSWORD
+                  name: env
+            - name: ADMIN_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  key: ADMIN_USERNAME
+                  name: env
+            - name: AUDIO_ROOT
+              valueFrom:
+                configMapKeyRef:
+                  key: AUDIO_ROOT
+                  name: env
+            - name: AWS_ACCESS_KEY
+              valueFrom:
+                configMapKeyRef:
+                  key: AWS_ACCESS_KEY
+                  name: env
+            - name: AWS_SECRET_KEY
+              valueFrom:
+                configMapKeyRef:
+                  key: AWS_SECRET_KEY
+                  name: env
+            - name: DEV_PORT
+              valueFrom:
+                configMapKeyRef:
+                  key: DEV_PORT
+                  name: env
+            - name: DEV_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: DEV_URL
+                  name: env
+            - name: HOSTED_IP
+              valueFrom:
+                configMapKeyRef:
+                  key: HOSTED_IP
+                  name: env
+            - name: NGROK_AUTH_TOKEN
+              valueFrom:
+                configMapKeyRef:
+                  key: NGROK_AUTH_TOKEN
+                  name: env
+            - name: OPENAI_API_KEY
+              valueFrom:
+                configMapKeyRef:
+                  key: OPENAI_API_KEY
+                  name: env
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  key: POSTGRES_DB
+                  name: env
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  key: POSTGRES_PASSWORD
+                  name: env
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  key: POSTGRES_USER
+                  name: env
+            - name: PROD_PORT
+              valueFrom:
+                configMapKeyRef:
+                  key: PROD_PORT
+                  name: env
+            - name: PROD_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: PROD_URL
+                  name: env
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  key: REDIS_URL
+                  name: env
+            - name: REGION
+              valueFrom:
+                configMapKeyRef:
+                  key: REGION
+                  name: env
+            - name: SECRET_KEY
+              valueFrom:
+                configMapKeyRef:
+                  key: SECRET_KEY
+                  name: env
+            - name: SPEECH_SAVE_LOCATION
+              valueFrom:
+                configMapKeyRef:
+                  key: SPEECH_SAVE_LOCATION
+                  name: env
+            - name: SQLALCHEMY_DATABASE_URI
+              valueFrom:
+                configMapKeyRef:
+                  key: SQLALCHEMY_DATABASE_URI
+                  name: env
+            - name: SUPERSET_CONFIG_PATH
+              valueFrom:
+                configMapKeyRef:
+                  key: SUPERSET_CONFIG_PATH
+                  name: env
+            - name: SUPERSET_HOME
+              valueFrom:
+                configMapKeyRef:
+                  key: SUPERSET_HOME
+                  name: env
+            - name: SUPERSET_SECRET_KEY
+              valueFrom:
+                configMapKeyRef:
+                  key: SUPERSET_SECRET_KEY
+                  name: env
+            - name: relative_audio_path
+              valueFrom:
+                configMapKeyRef:
+                  key: relative_audio_path
+                  name: env
+          image: superset
+          name: superset
+          ports:
+            - containerPort: 8088
+              hostPort: 8088
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /app/superset/superset_config.py
+              name: superset-claim0
+            - mountPath: /app/superset-init.sh
+              name: superset-claim1
+            - mountPath: /home/superset
+              name: superset-claim2
+      restartPolicy: Always
+      volumes:
+        - name: superset-claim0
+          persistentVolumeClaim:
+            claimName: superset-claim0
+        - name: superset-claim1
+          persistentVolumeClaim:
+            claimName: superset-claim1
+        - name: superset-claim2
+          persistentVolumeClaim:
+            claimName: superset-claim2

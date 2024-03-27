@@ -73,5 +73,5 @@ services:
 
 volumes:
   certbot-challenges:
-# TODO: Make a custom network for all the services
+    # TODO: Make a custom network for all the services
 
