@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.prod.yml
+    kompose.version: 1.32.0 (765fde254)
+  labels:
+    io.kompose.service: redis
+  name: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: redis
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose.prod.yml
+        kompose.version: 1.32.0 (765fde254)
+      labels:
+        io.kompose.network/obsidian-default: "true"
+        io.kompose.service: redis
+    spec:
+      containers:
+        - image: redis:5.0.5-alpine
+          name: redis
+      restartPolicy: Always

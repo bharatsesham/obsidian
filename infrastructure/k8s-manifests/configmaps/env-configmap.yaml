@@ -1,0 +1,26 @@
+apiVersion: v1
+data:
+  ADMIN_EMAIL: sesham.bharat@gmail.com
+  ADMIN_FIRSTNAME: Bharat
+  ADMIN_LASTNAME: Sesham
+  ADMIN_USERNAME: admin
+  AUDIO_ROOT: ""
+  DEV_PORT: "5002"
+  DEV_URL: http://localhost:5002/
+  HOSTED_IP: http://192.168.1.100:8011
+  POSTGRES_DB: superset
+  POSTGRES_USER: superset
+  PROD_PORT: "5001"
+  PROD_URL: https://ml-engine.ngrok.app/generate
+  REDIS_URL: redis://redis:6379/0
+  REGION: us-west-2
+  SPEECH_SAVE_LOCATION: /data/speech_data
+  SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://superset:superset@postgres/superset
+  SUPERSET_CONFIG_PATH: /app/superset/superset_config.py
+  SUPERSET_HOME: /home/superset
+  relative_audio_path: speech_danny_demo.mp3
+kind: ConfigMap
+metadata:
+  labels:
+    io.kompose.service: ai-engine-env
+  name: env
