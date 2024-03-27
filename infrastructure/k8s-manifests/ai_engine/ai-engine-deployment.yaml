@@ -131,6 +131,7 @@ spec:
                   name: env
                   key: NGROK_AUTH_TOKEN
                   optional: true 
+
             - name: SUPERSET_SECRET_KEY
               valueFrom:
                 secretKeyRef:
